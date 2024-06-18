@@ -1,101 +1,87 @@
-//import 'dart:ui_web';
-
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:location/location.dart';
 
 class GoogleMaps extends StatefulWidget {
-  const GoogleMaps({super.key});
-
   @override
-  State<GoogleMaps> createState() => _GoogleMapsState();
+  _GoogleMapsState createState() => _GoogleMapsState();
 }
 
 class _GoogleMapsState extends State<GoogleMaps> {
-  late GoogleMapController mapController;
-
-  Location _locationController = new Location();
-  final Completer<GoogleMapController> _mapController =
-      Completer<GoogleMapController>();
-  final LatLng _center = const LatLng(12.72408, 80.170680);
-  //static const LatLng _pGooglePlex = LatLng(37.4223, -122.0848);
-  final LatLng _pApplePark = const LatLng(12.82070, 80.180450);
-  LatLng? _currentP = null;
+  GoogleMapController? mapController;
+  Set<Polyline> _polylines = {};
+  Set<Marker> _markers = {};
+  final LatLng _origin = LatLng(13.049864, 80.282742); // Marina Beach
+  final LatLng _destination =
+      LatLng(13.082680, 80.270718); // Chennai Central Railway Station
 
   @override
   void initState() {
     super.initState();
-    getLocationUpdates();
+    _markers.add(Marker(
+      markerId: MarkerId('origin'),
+      position: _origin,
+      infoWindow: InfoWindow(title: 'Marina Beach'),
+    ));
+    _markers.add(Marker(
+      markerId: MarkerId('destination'),
+      position: _destination,
+      infoWindow: InfoWindow(title: 'Chennai Central Railway Station'),
+    ));
+    _createRoute();
   }
 
-  void _onMapCreated(GoogleMapController controller) {
-    mapController = controller;
+  void _createRoute() {
+    List<LatLng> polylineCoordinates = [
+      LatLng(13.049864, 80.282742), // Marina Beach
+      LatLng(13.052622, 80.279099),
+      LatLng(13.055265, 80.276158),
+      LatLng(13.059489, 80.273277),
+      LatLng(13.063272, 80.272060),
+      LatLng(13.067061, 80.271227),
+      LatLng(13.070722, 80.271031),
+      LatLng(13.073885, 80.270813),
+      LatLng(13.077040, 80.270769),
+      LatLng(13.080194, 80.270774),
+      LatLng(13.082680, 80.270718) // Chennai Central Railway Station
+    ];
+
+    Polyline polyline = Polyline(
+      polylineId: PolylineId('route'),
+      color: Colors.blue,
+      width: 5,
+      points: polylineCoordinates,
+    );
+
+    setState(() {
+      _polylines.add(polyline);
+    });
+
+    // Debug: Print the polyline points
+    print('Polyline Points: $polylineCoordinates');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Google Maps Flutter'),
-        backgroundColor: Colors.green[700],
+        title: Text('Google Navigation App'),
       ),
-      body: _currentP == null
-          ? const Center(
-              child: Text("Loading..."),
-            )
-          : GoogleMap(
-              onMapCreated: _onMapCreated,
-              initialCameraPosition:
-                  CameraPosition(target: _center, zoom: 13.0),
-              markers: {
-                Marker(
-                    markerId: MarkerId("_currentLocation"),
-                    icon: BitmapDescriptor.defaultMarker,
-                    position: _currentP!),
-                Marker(
-                    markerId: MarkerId("_sourceLocation"),
-                    icon: BitmapDescriptor.defaultMarker,
-                    position: _center),
-                Marker(
-                    markerId: MarkerId("_destinationLocation"),
-                    icon: BitmapDescriptor.defaultMarker,
-                    position: _pApplePark)
-              },
-            ),
+      body: GoogleMap(
+        initialCameraPosition: CameraPosition(
+          target: _origin,
+          zoom: 13,
+        ),
+        onMapCreated: (controller) {
+          mapController = controller;
+        },
+        polylines: _polylines,
+        markers: _markers,
+      ),
     );
   }
-
-  Future<void> getLocationUpdates() async {
-    bool _serviceEnabled;
-    PermissionStatus _permissionGranted;
-
-    _serviceEnabled = await _locationController.serviceEnabled();
-    if (_serviceEnabled) {
-      _serviceEnabled = await _locationController.requestService();
-    } else {
-      return;
-    }
-    _permissionGranted = await _locationController.hasPermission();
-    if (_permissionGranted == PermissionStatus.denied) {
-      _permissionGranted = await _locationController.requestPermission();
-      if (_permissionGranted != PermissionStatus.granted) {
-        return;
-      }
-    }
-
-    _locationController.onLocationChanged
-        .listen((LocationData currentLocation) {
-      if (currentLocation.latitude != null &&
-          currentLocation.longitude != null) {
-        setState(() {
-          _currentP =
-              LatLng(currentLocation.latitude!, currentLocation.longitude!);
-          print(_currentP);
-        });
-      }
-    });
-  }
 }
+
+
+//AIzaSyDDs4HJWoXt4YCtycv2N_QkiDomQc9AnF8
+//12.72408, 80.170680
+//12.82070, 80.180450
