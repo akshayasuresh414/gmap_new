@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:gmap/gmaps.dart';
+//import 'package:gmap/mongoDB.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+//  await MongoDatabase.connect();
   runApp(const MyApp());
 }
 
